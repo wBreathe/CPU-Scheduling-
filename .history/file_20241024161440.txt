@@ -1,5 +1,4 @@
 PID, Arrival Time, CPU Burst Time
-10
 1 5 5
 2 4 6
 3 3 7

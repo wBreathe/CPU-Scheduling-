@@ -21,8 +21,8 @@ void addWaitTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void removeProcess(priority_queue<Process>&schedule, Process p);
-void AlgorithmA(vector<Process>processes);
-void AlgorithmB(vector<Process>processes);
+// void AlgorithmA(vector<Process>processes);
+// void AlgorithmB(vector<Process>processes);
 void AlgorithmC(vector<Process>processes);
 
 template <typename T>
@@ -39,9 +39,9 @@ int main(int argc, const char * argv[]){
     vector<Process>processes;
     readInput(processes); 
     sortProcesses(processes);
-    AlgorithmA(processes); 
-    AlgorithmB(processes); 
-    AlgorithmC(processes); 
+    // AlgorithmA(processes); // fifo
+    // AlgorithmB(processes); // RR
+    AlgorithmC(processes); // srtf
 
     return 0;
 }
@@ -386,5 +386,5 @@ void AlgorithmC(vector<Process>processes){
     }
     printInfo("Average STATS of algorithm C: ", ceil(averageCompletion / finished.size()), ceil(avgWait / finished.size()), ceil(avgTurn / finished.size()), totalSwitch);
     cout << "--Algorithm C ends--"<<endl;
-    exit(0);
+
 }

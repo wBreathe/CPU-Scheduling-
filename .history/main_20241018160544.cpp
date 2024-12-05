@@ -13,7 +13,7 @@
 #include "Process.h"
 using namespace std;
 
-void readInput(vector<Process>& processes);
+void readFile(string fileName, vector<Process>&processes);
 void sortProcesses(vector<Process>&processes);
 void addWaitTime(deque<Process>&schedule, int count);
 void addTurnaroundTime(deque<Process>&schedule, int count);
@@ -25,24 +25,14 @@ void AlgorithmA(vector<Process>processes);
 void AlgorithmB(vector<Process>processes);
 void AlgorithmC(vector<Process>processes);
 
-template <typename T>
-void printInfo(string head, T completion_time, T wait_time, T turnaround_time, T context_switches){
-    cout << head <<endl;
-    cout << "Time of completion: " << completion_time << "ms" << endl;
-    cout << "Time spent waiting: " << wait_time << "ms" << endl;
-    cout << "  Turn Around time: " << turnaround_time << "ms" << endl;
-    cout << "  Context Switches: " << context_switches << endl << endl;
-}
-
 int main(int argc, const char * argv[]){
     int quantum = 1;
     vector<Process>processes;
     readInput(processes); 
     sortProcesses(processes);
-    AlgorithmA(processes); 
-    AlgorithmB(processes); 
-    AlgorithmC(processes); 
-
+    AlgorithmA(processes); // fifo
+    AlgorithmB(processes); // srtf
+    AlgorithmC(processes); // RR
     return 0;
 }
 
@@ -66,6 +56,15 @@ void sortProcesses(vector<Process>&processes){
         return p1.getArrivalTime() < p2.getArrivalTime();
     });
 }
+template <typename T>
+void printInfo(string head, T cpu_burst_time, T completion_time, T wait_time, T turnaround_time, T context_switches){
+    cout << head <<endl;
+    cout << "CPU burst time: " << cpu_burst_time << "ms" << endl;
+    cout << "Time of completion: " << completion_time << "ms" << endl;
+    cout << "Time spent waiting: " << wait_time << "ms" << endl;
+    cout << "  Turn Around time: " << turnaround_time << "ms" << endl;
+    cout << "  Context Switches: " << context_switches << endl << endl;
+}
 
 void addWaitTime(deque<Process>&schedule, int count){
     for(int i = 0; i < schedule.size(); ++i){
@@ -80,32 +79,22 @@ void addTurnaroundTime(deque<Process>&schedule, int count){
 }
 
 void addWaitTime(priority_queue<Process>&schedule, int count){
-    vector<Process> tempVec;
-
-    while (!schedule.empty()) {
-        Process temp = schedule.top();
-        temp.addWaitTime(count); 
-        tempVec.push_back(temp);  
-        schedule.pop(); 
-    }
-
-    for (const auto& proc : tempVec) {
-        schedule.push(proc);
+    Process temp;
+    for(int i = 0; i < schedule.size(); ++i){
+        temp = schedule.top();
+        temp.addWaitTime(count);
+        schedule.pop();
+        schedule.push(temp);
     }
 }
 
 void addTurnaroundTime(priority_queue<Process>&schedule, int count){
-    vector<Process> tempVec;
-
-    while (!schedule.empty()) {
-        Process temp = schedule.top();
+    Process temp;
+    for(int i = 0; i < schedule.size(); ++i){
+        temp = schedule.top();
         temp.addTurnaroundTime(count);
-        tempVec.push_back(temp); 
         schedule.pop();
-    }
-
-    for (const auto& proc : tempVec) {
-        schedule.push(proc);
+        schedule.push(temp);
     }
 }
 
@@ -130,11 +119,13 @@ void removeProcess(priority_queue<Process>&schedule, Process p){
 
 void AlgorithmA(vector<Process>processes){
     int i = 0, time = 0, c = 0;
-    double averageCompletion = 0, avgWait = 0, avgTurn = 0, totalSwitch = 0;
+    double averageCompletion = 0, averageCPU = 0, avgWait = 0, avgTurn = 0, totalSwitch = 0;
     cout << "--Algorithm A starts--"<<endl;
     cout << "-- Grantt Chart -- (PID->CPU Burst Time)" << endl << "|";
     
-
+    for(int i = 0; i < processes.size(); ++i){
+        averageCPU += processes[i].getCPUTime();
+    }
     while(i < processes.size()){
         processes[i].addWaitTime(abs(time - processes[i].getArrivalTime()));
         while(true){
@@ -160,30 +151,119 @@ void AlgorithmA(vector<Process>processes){
     
     for(int i = 0; i < processes.size(); ++i){
         cout << i + 1 << ":" << endl;
-        if(i == processes.size() - 1) {
-            processes[i].decNumOfContextSwitching();
-        }
-        printInfo("PID: " + std::to_string(processes[i].getPID()), processes[i].getTimeOfCompletion(), processes[i].getWaitTime(), processes[i].getTurnaroundTime(), processes[i].getNumOfContextSwitching());
+        printInfo("PID: " + std::to_string(processes[i].getPID()), processes[i].getCPUTime(), processes[i].getTimeOfCompletion(), processes[i].getWaitTime(), processes[i].getTurnaroundTime(), processes[i].getNumOfContextSwitching());
         averageCompletion += processes[i].getTimeOfCompletion();
         avgWait += processes[i].getWaitTime();
         avgTurn += processes[i].getTurnaroundTime();
         totalSwitch += processes[i].getNumOfContextSwitching();
     }
-    printInfo("Average STATS of algorithm A: ", ceil(averageCompletion / processes.size()), ceil(avgWait / processes.size()), ceil(avgTurn / processes.size()), totalSwitch);
-    cout << "--Algorithm A ends--"<<endl;
+    printInfo("Average STATS: ", ceil(averageCPU / processes.size()), ceil(averageCompletion / processes.size()), ceil(avgWait / processes.size()), ceil(avgTurn / processes.size()), totalSwitch);
 }
 
-
 void AlgorithmB(vector<Process>processes){
+    int time = 0, runTime = 0;
+    double averageCompletion = 0, avgWait = 0, avgTurn = 0, averageCPU = 0, totalSwitch = 0;
+    bool firstRun = true, change = false;
+    priority_queue<Process>schedule;
+    Process run;
+    vector<Process>copy;
+    vector<Process>finished;
+    cout << "--Algorithm A starts--"<<endl;
+    cout << "-- Gnatt Chart -- (PID->CPU Burst Time)" << endl << "|";
+    
+    for(int i = 0; i < processes.size(); ++i){
+        Process *p = new Process();
+        copy.push_back(*p);
+        delete p;
+    }
+    
+    for(int i = 0; i < processes.size(); ++i){
+        copy[i] = processes[i];
+    }
+    
+    while(true){
+        if(processes[0].getArrivalTime() > time){
+            ++time;
+        }else{
+            break;
+        }
+    }
+    
+    while(finished.size() < processes.size()){
+        while(true){
+            if(copy[0].getArrivalTime() <= time && !copy.empty()){
+                schedule.push(copy[0]);
+                copy.erase(copy.begin());
+            }else{
+                break;
+            }
+        }
+        if(firstRun){
+            run = schedule.top();
+            schedule.pop();
+            firstRun = false;
+        }
+        if(!schedule.empty() && schedule.top().getCPUTime() < run.getCPUTime()){
+            run.incNumOfContextSwitching();
+            cout << " " << run.getPID() << "->" << runTime << " |";
+            schedule.push(run);
+            run = schedule.top();
+            change = true;
+            schedule.pop();
+        }else if(run.getCPUTime() <= 0){
+            run.incNumOfContextSwitching();
+            run.setTimeOfCompletion(time);
+            cout << " " << run.getPID() << "->" << runTime << " |";
+            finished.push_back(run);
+            run = schedule.top();
+            change = true;
+            schedule.pop();
+        }else{
+            run.setCPUTime(run.getCPUTime() - 1);
+            run.addTurnaroundTime(1);
+            addTurnaroundTime(schedule, 1);
+            addWaitTime(schedule, 1);
+        }
+        
+        ++runTime;
+        ++time;
+        
+        if(change){
+            change = false;
+            runTime = 0;
+        }
+    }
+    
+    cout << endl << endl << "---- Process List ----" << endl;
+    
+    for(int i = 0; i < finished.size(); ++i){
+        cout << i + 1 << ":" << endl;
+        printInfo("PID: " + std::to_string(processes[i].getPID()), processes[i].getCPUTime(), processes[i].getTimeOfCompletion(), processes[i].getWaitTime(), processes[i].getTurnaroundTime(), processes[i].getNumOfContextSwitching());
+        averageCompletion += processes[i].getTimeOfCompletion();
+        averageCPU += processes[i].getCPUTime();
+        avgWait += finished[i].getWaitTime();
+        avgTurn += finished[i].getTurnaroundTime();
+        totalSwitch += finished[i].getNumOfContextSwitching();
+    }
+    printInfo("Average STATS: ", ceil(averageCPU / processes.size()), ceil(averageCompletion / processes.size()), ceil(avgWait / processes.size()), ceil(avgTurn / processes.size()), totalSwitch);
+    exit(0); //For some reason on my machine this function never returns to main so exit here
+    //on the cse grid it works fine
+}
 
-    int quantum = 3,time = 0, counter = 0, runTime = 0;
-    double averageCompletion = 0, avgWait = 0, avgTurn = 0, totalSwitch = 0;
+void RR(int quantum, vector<Process>processes){
+    int time = 0, counter = 0, runTime = 0;
+    double avgWait = 0, avgTurn = 0, averageCPU = 0, totalSwitch = 0;
+    string hold;
     bool next = false, change = false;
     Process *run = nullptr;
     deque<Process>schedule;
     vector<Process>copy;
     vector<Process>finished;
-
+    cout << "Number of processes: " << processes.size() << endl;
+    cout << "Press [ENTER] to begin RR quantum " << quantum << endl;
+    getline(cin, hold);
+    
+    cout << "-- Gnatt Chart -- (PID->CPU Burst Time)" << endl << "|";
     
     for(int i = 0; i < processes.size(); ++i){
         Process *p = new Process();
@@ -265,126 +345,35 @@ void AlgorithmB(vector<Process>processes){
             runTime = 0;
         }
     }
-    cout << endl << endl << "---- Process List ----" << endl;
-    for(int i = 0; i < finished.size(); ++i){
-        cout << i + 1 << ":" << endl;
-        if(i == finished.size() - 1) {
-            finished[i].decNumOfContextSwitching();
-        }
-        printInfo("PID: " + std::to_string(finished[i].getPID()), finished[i].getTimeOfCompletion(), finished[i].getWaitTime(), finished[i].getTurnaroundTime(), finished[i].getNumOfContextSwitching());
-        averageCompletion += finished[i].getTimeOfCompletion();
-        avgWait += finished[i].getWaitTime();
-        avgTurn += finished[i].getTurnaroundTime();
-        totalSwitch += finished[i].getNumOfContextSwitching();
-    }
-    printInfo("Average STATS of algorithm B: ", ceil(averageCompletion / finished.size()), ceil(avgWait / finished.size()), ceil(avgTurn / finished.size()), totalSwitch);
-    cout << "--Algorithm B ends--"<<endl;
-}
-
-
-
-void AlgorithmC(vector<Process>processes){
-    int time = 0, runTime = 0;
-    double averageCompletion = 0, avgWait = 0, avgTurn = 0, totalSwitch = 0;
-    bool firstRun = true, change = false, preempt = false;
-    priority_queue<Process>schedule;
-    Process run;
-    vector<Process>copy;
-    vector<Process>finished;
-    cout << "--Algorithm C starts--"<<endl;
-    cout << "-- Gnatt Chart -- (PID->CPU Burst Time)" << endl << "|";
     
-    for(int i = 0; i < processes.size(); ++i){
-        Process *p = new Process();
-        copy.push_back(*p);
-        delete p;
-    }
-    
-    for(int i = 0; i < processes.size(); ++i){
-        copy[i] = processes[i];
-    }
-    
-    while(true){
-        if(processes[0].getArrivalTime() > time){
-            ++time;
-        }else{
-            break;
-        }
-    }
-    
-    while(finished.size() < processes.size()){
-        cout<<0<<endl;
-        while(true){
-            cout<<"@"<<endl;
-            if(copy[0].getArrivalTime() <= time && !copy.empty()){
-                cout<<"in copy: current time: "<<time<<", current pid: "<<copy[0].getPID()<<endl;
-                schedule.push(copy[0]);
-                copy.erase(copy.begin());
-            }else{
-                break;
-            }
-        }
-        if(firstRun){
-            run = schedule.top();
-            schedule.pop();
-            firstRun = false;
-        }
-        if(!schedule.empty() && schedule.top().getCPUTime() < run.getCPUTime()){
-            cout<<1<<endl;
-            run.incNumOfContextSwitching();
-            cout << " " << run.getPID() << "->" << runTime << " |";
-            schedule.push(run);
-            run = schedule.top();
-            change = true;
-            preempt = true;
-            schedule.pop();
-        }
-        else if(run.getCPUTime() <= 0){
-            cout<<2<<endl;
-            run.incNumOfContextSwitching();
-            run.setTimeOfCompletion(time);
-            cout << " " << run.getPID() << "->" << runTime << " |";
-            finished.push_back(run);
-            cout<<"finished turnaround: "<<run.getTurnaroundTime()<<", wait time: "<<run.getWaitTime()<<endl;
-            run = schedule.top();
-            change = true;
-            schedule.pop();
-        }else{
-            addTurnaroundTime(schedule, 1);
-            addWaitTime(schedule, 1);
-        }
-        ++runTime;
-        ++time;
-        run.addTurnaroundTime(1);
-
-        run.setCPUTime(run.getCPUTime() - 1);
-
-        if(change and finished.size() < processes.size()){
-            change = false;
-            runTime = 1;
-            addTurnaroundTime(schedule, 1);
-            addWaitTime(schedule, 1);
-            
-        }
-        cout<<" current time: "<<time-1<<", current runtime: "<<runTime<<", and current process: "<<run.getPID()<<", "<<run.getCPUTime()<<". "<<endl;
-        cout<<" wait time of the current running process: "<<run.getWaitTime()<<", turnaround: "<<run.getTurnaroundTime()<<endl;
-        cout<<processes.size()<<"___"<<finished.size()<<endl;
-    }
-    cout<<"out"<<endl;
     cout << endl << endl << "---- Process List ----" << endl;
     
     for(int i = 0; i < finished.size(); ++i){
         cout << i + 1 << ":" << endl;
-        if(i == finished.size() - 1){
-            finished[i].decNumOfContextSwitching();
+        if(finished[i].getPID() / 10 < 1){
+            cout << "----  PID: " << finished[i].getPID() << "   ----" << endl;
+        }else if(finished[i].getPID() >= 100){
+            cout << "----  PID: " << finished[i].getPID() << " ----" << endl;
+        }else{
+            cout << "----  PID: " << finished[i].getPID() << "  ----" << endl;
         }
-        printInfo("PID: " + std::to_string(finished[i].getPID()), finished[i].getTimeOfCompletion(), finished[i].getWaitTime(), finished[i].getTurnaroundTime(), finished[i].getNumOfContextSwitching());
-        averageCompletion += finished[i].getTimeOfCompletion();
+        cout << "Time of completion: " << finished[i].getTimeOfCompletion() << "ms" << endl;
+        cout << "Time spent waiting: " << finished[i].getWaitTime() << "ms" << endl;
+        cout << "  Turn Around time: " << finished[i].getTurnaroundTime() << "ms" << endl;
+        cout << "  Context Switches: " << finished[i].getNumOfContextSwitching() << endl << endl;
+        
+        averageCPU += processes[i].getCPUTime();
         avgWait += finished[i].getWaitTime();
         avgTurn += finished[i].getTurnaroundTime();
         totalSwitch += finished[i].getNumOfContextSwitching();
     }
-    printInfo("Average STATS of algorithm C: ", ceil(averageCompletion / finished.size()), ceil(avgWait / finished.size()), ceil(avgTurn / finished.size()), totalSwitch);
-    cout << "--Algorithm C ends--"<<endl;
-    exit(0);
+    
+    cout << "___________STATS___________" << endl;
+    cout << "  Average CPU burst time: " << ceil(averageCPU / processes.size()) << "ms" << endl;
+    cout << "       Average wait time: " << ceil(avgWait / finished.size()) << "ms" << endl;
+    cout << "Average turn around time: " << ceil(avgTurn / finished.size()) << "ms" << endl;
+    cout << "   Average response time: " << ceil(avgWait / finished.size()) << "ms" << endl;
+    cout << "  Total context switches: " << totalSwitch << endl;
 }
+
+

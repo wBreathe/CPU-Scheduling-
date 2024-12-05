@@ -8,14 +8,12 @@ CC = g++
 CXXFLAGS = -g -std=c++11
 
 OBJS = main.o
-TARGET = newScheduling
+TARGET = scheduling
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(OBJS)
-	rm -f $(OBJS)  
 
 .cpp.o:
 	$(CC) -c $(CXXFLAGS) $(INCDIR) $<
 
-clean:
-	rm -f $(OBJS) $(TARGET) core
+rm -f $(OBJS) $(TARGET) core

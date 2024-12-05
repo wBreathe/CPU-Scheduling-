@@ -1,0 +1,108 @@
+PID, Arrival Time, CPU Burst Time
+10
+1 5 5
+2 4 6
+3 3 7
+4 1 9
+5 2 2
+6 6 3
+7 0 10
+8 1 2
+9 2 9
+10 3 5
+
+10
+1 5 5
+2 4 6
+3 3 7
+4 1 9
+5 2 2
+6 6 3
+7 0 10
+8 1 2
+9 2 9
+10 3 5
+
+
+--Algorithm C starts--
+-- Gnatt Chart -- (PID->CPU Burst Time)
+| 7->1 | 8->2 | 5->2 | 6->3 | 10->5 | 1->5 | 2->6 | 3->7 | 9->9 | 7->9 | 4->9 |
+
+---- Process List ----
+1:
+PID: 8
+Time of completion: 4ms
+Time spent waiting: 0ms
+  Turn Around time: 2ms
+  Context Switches: 1
+
+2:
+PID: 5
+Time of completion: 7ms
+Time spent waiting: 10ms
+  Turn Around time: 12ms
+  Context Switches: 1
+
+3:
+PID: 6
+Time of completion: 11ms
+Time spent waiting: 8ms
+  Turn Around time: 11ms
+  Context Switches: 1
+
+4:
+PID: 10
+Time of completion: 17ms
+Time spent waiting: 12ms
+  Turn Around time: 21ms
+  Context Switches: 1
+
+5:
+PID: 1
+Time of completion: 23ms
+Time spent waiting: 46ms
+  Turn Around time: 47ms
+  Context Switches: 1
+
+6:
+PID: 2
+Time of completion: 30ms
+Time spent waiting: 25ms
+  Turn Around time: 31ms
+  Context Switches: 1
+
+7:
+PID: 3
+Time of completion: 38ms
+Time spent waiting: 24ms
+  Turn Around time: 31ms
+  Context Switches: 1
+
+8:
+PID: 9
+Time of completion: 48ms
+Time spent waiting: 7ms
+  Turn Around time: 16ms
+  Context Switches: 1
+
+9:
+PID: 7
+Time of completion: 58ms
+Time spent waiting: 16ms
+  Turn Around time: 26ms
+  Context Switches: 2
+
+10:
+PID: 4
+Time of completion: 68ms
+Time spent waiting: 25ms
+  Turn Around time: 34ms
+  Context Switches: 0
+
+Average STATS of algorithm C:
+Time of completion: 31ms
+Time spent waiting: 18ms
+  Turn Around time: 24ms
+  Context Switches: 10
+
+--Algorithm C ends--

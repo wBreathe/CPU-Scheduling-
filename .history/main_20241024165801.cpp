@@ -21,8 +21,8 @@ void addWaitTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void removeProcess(priority_queue<Process>&schedule, Process p);
-void AlgorithmA(vector<Process>processes);
-void AlgorithmB(vector<Process>processes);
+// void AlgorithmA(vector<Process>processes);
+// void AlgorithmB(vector<Process>processes);
 void AlgorithmC(vector<Process>processes);
 
 template <typename T>
@@ -39,9 +39,9 @@ int main(int argc, const char * argv[]){
     vector<Process>processes;
     readInput(processes); 
     sortProcesses(processes);
-    AlgorithmA(processes); 
-    AlgorithmB(processes); 
-    AlgorithmC(processes); 
+    // AlgorithmA(processes); // fifo
+    // AlgorithmB(processes); // RR
+    AlgorithmC(processes); // srtf
 
     return 0;
 }
@@ -80,32 +80,22 @@ void addTurnaroundTime(deque<Process>&schedule, int count){
 }
 
 void addWaitTime(priority_queue<Process>&schedule, int count){
-    vector<Process> tempVec;
-
-    while (!schedule.empty()) {
-        Process temp = schedule.top();
-        temp.addWaitTime(count); 
-        tempVec.push_back(temp);  
-        schedule.pop(); 
-    }
-
-    for (const auto& proc : tempVec) {
-        schedule.push(proc);
+    Process temp;
+    for(int i = 0; i < schedule.size(); ++i){
+        temp = schedule.top();
+        temp.addWaitTime(count);
+        schedule.pop();
+        schedule.push(temp);
     }
 }
 
 void addTurnaroundTime(priority_queue<Process>&schedule, int count){
-    vector<Process> tempVec;
-
-    while (!schedule.empty()) {
-        Process temp = schedule.top();
+    Process temp;
+    for(int i = 0; i < schedule.size(); ++i){
+        temp = schedule.top();
         temp.addTurnaroundTime(count);
-        tempVec.push_back(temp); 
         schedule.pop();
-    }
-
-    for (const auto& proc : tempVec) {
-        schedule.push(proc);
+        schedule.push(temp);
     }
 }
 
@@ -313,11 +303,8 @@ void AlgorithmC(vector<Process>processes){
     }
     
     while(finished.size() < processes.size()){
-        cout<<0<<endl;
         while(true){
-            cout<<"@"<<endl;
             if(copy[0].getArrivalTime() <= time && !copy.empty()){
-                cout<<"in copy: current time: "<<time<<", current pid: "<<copy[0].getPID()<<endl;
                 schedule.push(copy[0]);
                 copy.erase(copy.begin());
             }else{
@@ -330,7 +317,6 @@ void AlgorithmC(vector<Process>processes){
             firstRun = false;
         }
         if(!schedule.empty() && schedule.top().getCPUTime() < run.getCPUTime()){
-            cout<<1<<endl;
             run.incNumOfContextSwitching();
             cout << " " << run.getPID() << "->" << runTime << " |";
             schedule.push(run);
@@ -338,39 +324,34 @@ void AlgorithmC(vector<Process>processes){
             change = true;
             preempt = true;
             schedule.pop();
-        }
-        else if(run.getCPUTime() <= 0){
-            cout<<2<<endl;
+        }else if(run.getCPUTime() <= 0){
             run.incNumOfContextSwitching();
             run.setTimeOfCompletion(time);
             cout << " " << run.getPID() << "->" << runTime << " |";
             finished.push_back(run);
-            cout<<"finished turnaround: "<<run.getTurnaroundTime()<<", wait time: "<<run.getWaitTime()<<endl;
             run = schedule.top();
             change = true;
             schedule.pop();
         }else{
+            run.setCPUTime(run.getCPUTime() - 1);
+            run.addTurnaroundTime(1);
             addTurnaroundTime(schedule, 1);
             addWaitTime(schedule, 1);
         }
+        
         ++runTime;
         ++time;
-        run.addTurnaroundTime(1);
-
-        run.setCPUTime(run.getCPUTime() - 1);
-
-        if(change and finished.size() < processes.size()){
-            change = false;
-            runTime = 1;
-            addTurnaroundTime(schedule, 1);
-            addWaitTime(schedule, 1);
-            
+        if(preempt) {
+            --time;
+            preempt = false;
         }
-        cout<<" current time: "<<time-1<<", current runtime: "<<runTime<<", and current process: "<<run.getPID()<<", "<<run.getCPUTime()<<". "<<endl;
-        cout<<" wait time of the current running process: "<<run.getWaitTime()<<", turnaround: "<<run.getTurnaroundTime()<<endl;
-        cout<<processes.size()<<"___"<<finished.size()<<endl;
+        if(change){
+            change = false;
+            runTime = 0;
+        }
+        cout<<" current time: "<<time-1<<", and current process: "<<run.getPID()<<", "<<run.getCPUTime()<<". "<<endl;
     }
-    cout<<"out"<<endl;
+    
     cout << endl << endl << "---- Process List ----" << endl;
     
     for(int i = 0; i < finished.size(); ++i){

@@ -20,31 +20,27 @@ public:
     void addWaitTime(double time){waitTime += time;};
     void addTurnaroundTime(double time){turnaroundTime += time;};
     void incNumOfContextSwitching(){++numOfContextSwitching;};
-    void decNumOfContextSwitching(){--numOfContextSwitching;};
     void setTimeOfCompletion(int _timeOfCompletion){timeOfCompletion = _timeOfCompletion;};
     int getPID() const {return PID;};
     int getCPUTime() const {return CPUTime;};
     int getArrivalTime() const {return arrivalTime;};
     int getPriority() const {return priority;};
-    int getWaitTime() const {return waitTime;};
-    int getTurnaroundTime() const {return turnaroundTime;};
+    long getWaitTime() const {return waitTime;};
+    long getTurnaroundTime() const {return turnaroundTime;};
     int getNumOfContextSwitching() const {return numOfContextSwitching;};
     int getTimeOfCompletion() const {return timeOfCompletion;};
-    void operator=(const Process& p);
+    void operator=(Process p);
 };
 
 
-void Process::operator=(const Process& p){
-    if (this != &p) {  
-        PID = p.getPID();
-        CPUTime = p.getCPUTime();
-        arrivalTime = p.getArrivalTime();
-        priority = p.getPriority();
-        waitTime = p.getWaitTime();
-        turnaroundTime = p.getTurnaroundTime();
-        numOfContextSwitching = p.getNumOfContextSwitching();
-        timeOfCompletion = p.getTimeOfCompletion();  // 补充这里
-    }
+void Process::operator=(Process p){
+    PID = p.getPID();
+    CPUTime = p.getCPUTime();
+    arrivalTime = p.getArrivalTime();
+    priority = p.getPriority();
+    waitTime = p.getWaitTime();
+    turnaroundTime = p.getTurnaroundTime();
+    numOfContextSwitching = p.getNumOfContextSwitching();
 }
 
 bool operator<(const Process &p1, const Process &p2){

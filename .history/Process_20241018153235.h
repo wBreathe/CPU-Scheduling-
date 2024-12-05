@@ -20,7 +20,6 @@ public:
     void addWaitTime(double time){waitTime += time;};
     void addTurnaroundTime(double time){turnaroundTime += time;};
     void incNumOfContextSwitching(){++numOfContextSwitching;};
-    void decNumOfContextSwitching(){--numOfContextSwitching;};
     void setTimeOfCompletion(int _timeOfCompletion){timeOfCompletion = _timeOfCompletion;};
     int getPID() const {return PID;};
     int getCPUTime() const {return CPUTime;};

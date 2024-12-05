@@ -8,7 +8,7 @@ CC = g++
 CXXFLAGS = -g -std=c++11
 
 OBJS = main.o
-TARGET = newScheduling
+TARGET = scheduling
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(OBJS)
@@ -19,3 +19,4 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET) core
+

@@ -21,8 +21,8 @@ void addWaitTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void removeProcess(priority_queue<Process>&schedule, Process p);
-void AlgorithmA(vector<Process>processes);
-void AlgorithmB(vector<Process>processes);
+// void AlgorithmA(vector<Process>processes);
+// void AlgorithmB(vector<Process>processes);
 void AlgorithmC(vector<Process>processes);
 
 template <typename T>
@@ -39,9 +39,9 @@ int main(int argc, const char * argv[]){
     vector<Process>processes;
     readInput(processes); 
     sortProcesses(processes);
-    AlgorithmA(processes); 
-    AlgorithmB(processes); 
-    AlgorithmC(processes); 
+    // AlgorithmA(processes); // fifo
+    // AlgorithmB(processes); // RR
+    AlgorithmC(processes); // srtf
 
     return 0;
 }
@@ -332,6 +332,7 @@ void AlgorithmC(vector<Process>processes){
         if(!schedule.empty() && schedule.top().getCPUTime() < run.getCPUTime()){
             cout<<1<<endl;
             run.incNumOfContextSwitching();
+            run.addTurnaroundTime(1);
             cout << " " << run.getPID() << "->" << runTime << " |";
             schedule.push(run);
             run = schedule.top();
@@ -342,6 +343,7 @@ void AlgorithmC(vector<Process>processes){
         else if(run.getCPUTime() <= 0){
             cout<<2<<endl;
             run.incNumOfContextSwitching();
+            run.addTurnaroundTime(1);
             run.setTimeOfCompletion(time);
             cout << " " << run.getPID() << "->" << runTime << " |";
             finished.push_back(run);

@@ -21,9 +21,9 @@ void addWaitTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void addTurnaroundTime(priority_queue<Process>&schedule, int count);
 void removeProcess(priority_queue<Process>&schedule, Process p);
-void AlgorithmA(vector<Process>processes);
+// void AlgorithmA(vector<Process>processes);
 void AlgorithmB(vector<Process>processes);
-void AlgorithmC(vector<Process>processes);
+// void AlgorithmC(vector<Process>processes);
 
 template <typename T>
 void printInfo(string head, T completion_time, T wait_time, T turnaround_time, T context_switches){
@@ -39,9 +39,9 @@ int main(int argc, const char * argv[]){
     vector<Process>processes;
     readInput(processes); 
     sortProcesses(processes);
-    AlgorithmA(processes); 
-    AlgorithmB(processes); 
-    AlgorithmC(processes); 
+    // AlgorithmA(processes); // fifo
+    AlgorithmB(processes); // RR
+    //AlgorithmC(processes); // srtf
 
     return 0;
 }

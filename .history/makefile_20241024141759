@@ -7,7 +7,7 @@ CC = g++
 #use -g for gnu debugger and -std= for c++11 compiling
 CXXFLAGS = -g -std=c++11
 
-OBJS = main.o
+OBJS = scheduling.o
 TARGET = newScheduling
 
 $(TARGET): $(OBJS)
